@@ -83,8 +83,8 @@ class Heap:
         if self.root is None:
             return None
 
-        def last(node: Node):
-            if node.is_leaf():
+        def last(node: Node | None):
+            if node is None or node.is_leaf():
                 return node
             if self.__height(node.left) > self.__height(node.right):
                 return last(node.left)
@@ -121,6 +121,9 @@ class Heap:
 
         node = self.last_node()
 
+        if node is None or node.parent is None:
+            return None, False
+
         self.swap(self.root, node)
         # remove last element
         key = node.key
@@ -136,7 +139,7 @@ class Heap:
         self.rebuild(self.root)
         return key, True
 
-    def rebuild(self, node: Node):
+    def rebuild(self, node: Node | None):
         """
         naam: rebuild
         parameters: (node: Node)
@@ -145,7 +148,7 @@ class Heap:
         preconditie: geen
         postconditie: de boom is een heap
         """
-        if node is None or node.is_leaf():
+        if node is None or node.left is None:
             return None
 
         if self.maxHeap:
@@ -163,13 +166,13 @@ class Heap:
                     self.swap(node, node.right)
                     self.rebuild(node.right)
 
-    def insert(self, node: Node | None, item: int):
+    def insert(self, node: Node, item: int):
         """
         naam: insert
         parameters: (node: Node, item: waarde)
         beschrijving: voegt een waarde toe aan de heap-boom
         output: (node: Node, inserted: boolean)
-        preconditie: geen
+        preconditie: de node mag niet leeg zijn
         postconditie: de boom bevat een nieuwe waarde
         """
         if node.left is None:
