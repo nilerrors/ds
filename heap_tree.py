@@ -57,6 +57,20 @@ class Heap:
 
         return 1 + max(self.__height(node.left), self.__height(node.right))
 
+    def __nodes(self, node: Node | None):
+        """
+        naam: __nodes
+        parameters: (node: Node)
+        beschrijving: geeft het aantal nodes in de boom terug
+        output: (nodes: integer)
+        preconditie: geen
+        postconditie: geen
+        """
+        if node is None:
+            return 0
+
+        return 1 + self.__nodes(node.left) + self.__nodes(node.right)
+
     def last_node(self):
         """
         naam: last_node
@@ -169,6 +183,23 @@ class Heap:
             node.right.is_left_child = False
             return node.right, True
         else:
+            # log("left height:", self.__height(node.left))
+            # log("right height:", self.__height(node.right))
+            # if self.__height(node.left) - 1 > self.__height(node.right) or (
+            #     node.left is not None
+            #     and node.left.left is not None
+            #     and node.left.right is not None
+            #     and (
+            #         node.right is None
+            #         or node.right.is_leaf()
+            #         or node.right.right is None
+            #     )
+            # ):
+            #     return self.insert(node.right, item)
+            # return self.insert(node.left, item)
+
+            if node.is_leaf() or self.__nodes(node.left) % 3 == 0:
+                return self.insert(node.right, item)
             return self.insert(node.left, item)
 
     def heapInsert(self, item):
@@ -281,6 +312,73 @@ class Heap:
         """
         self.root = None
         self.__load(tree, True)
+
+
+if __name__ == "__main__":
+    t = Heap()
+    t.heapInsert(5)
+    expected = {
+        "root": 5,
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
+    t.heapInsert(8)
+    expected = {
+        "root": 8,
+        "children": [
+            {"root": 5},
+            None,
+        ],
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
+    t.heapInsert(10)
+    expected = {
+        "root": 10,
+        "children": [
+            {"root": 5},
+            {"root": 8},
+        ],
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
+    t.heapInsert(4)
+    expected = {
+        "root": 10,
+        "children": [
+            {"root": 5, "children": [{"root": 4}, None]},
+            {"root": 8},
+        ],
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
+    t.heapInsert(3)
+    expected = {
+        "root": 10,
+        "children": [
+            {"root": 5, "children": [{"root": 4}, {"root": 3}]},
+            {"root": 8},
+        ],
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
+    log("test starts")
+    t.heapInsert(7)
+    expected = {
+        "root": 10,
+        "children": [
+            {"root": 5, "children": [{"root": 4}, {"root": 3}]},
+            {"root": 8, "children": [{"root": 7}, None]},
+        ],
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
 
 
 if __name__ == "__main__":
