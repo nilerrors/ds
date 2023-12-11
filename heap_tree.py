@@ -61,7 +61,7 @@ class Heap:
         """
         naam: __nodes
         parameters: (node: Node)
-        beschrijving: geeft het aantal nodes in de boom terug
+        beschrijving: geeft het aantal nodes in de (deel)boom terug
         output: (nodes: integer)
         preconditie: geen
         postconditie: geen
@@ -182,24 +182,11 @@ class Heap:
             node.right.parent = node
             node.right.is_left_child = False
             return node.right, True
+        elif self.__nodes(node.left) % 3 == 0 and self.__nodes(
+            node.left
+        ) != self.__nodes(node.right):
+            return self.insert(node.right, item)
         else:
-            # log("left height:", self.__height(node.left))
-            # log("right height:", self.__height(node.right))
-            # if self.__height(node.left) - 1 > self.__height(node.right) or (
-            #     node.left is not None
-            #     and node.left.left is not None
-            #     and node.left.right is not None
-            #     and (
-            #         node.right is None
-            #         or node.right.is_leaf()
-            #         or node.right.right is None
-            #     )
-            # ):
-            #     return self.insert(node.right, item)
-            # return self.insert(node.left, item)
-
-            if node.is_leaf() or self.__nodes(node.left) % 3 == 0:
-                return self.insert(node.right, item)
             return self.insert(node.left, item)
 
     def heapInsert(self, item):
@@ -489,3 +476,25 @@ if __name__ == "__main__":
     assert (
         t.save() == expected
     ), f"test 4 failed, insert and delete\ngot:      {t.save()}\nexpected: {expected}"
+
+
+if __name__ == "__main__":
+    t = Heap()
+    for i in range(1, 11):
+        t.heapInsert(i)
+    expected = {
+        "root": 10,
+        "children": [
+            {
+                "root": 9,
+                "children": [
+                    {"root": 7, "children": [{"root": 1}, {"root": 4}]},
+                    {"root": 8, "children": [{"root": 3}, None]},
+                ],
+            },
+            {"root": 6, "children": [{"root": 2}, {"root": 5}]},
+        ],
+    }
+    assert (
+        t.save() == expected
+    ), f"test 0, insert failed\ngot:      {t.save()}\nexpected: {expected}"
