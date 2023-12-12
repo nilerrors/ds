@@ -1,3 +1,6 @@
+from typing import Union
+
+
 DEBUG = False
 
 
@@ -21,9 +24,9 @@ def log(*items, enter=False, sep=" ", end="\n"):
 class Node:
     def __init__(self, key):
         self.key = key
-        self.parent: Node | None = None
-        self.left: Node | None = None
-        self.right: Node | None = None
+        self.parent: Union[Node, None] = None
+        self.left: Union[Node, None] = None
+        self.right: Union[Node, None] = None
         self.is_left_child = True
 
     def is_leaf(self):
@@ -43,7 +46,7 @@ class Heap:
         self.maxHeap = maxHeap
         self.root = None
 
-    def __height(self, node: Node | None):
+    def __height(self, node: Union[Node, None]):
         """
         naam: __height
         parameters: (node: Node)
@@ -57,7 +60,7 @@ class Heap:
 
         return 1 + max(self.__height(node.left), self.__height(node.right))
 
-    def __nodes(self, node: Node | None):
+    def __nodes(self, node: Union[Node, None]):
         """
         naam: __nodes
         parameters: (node: Node)
@@ -71,6 +74,25 @@ class Heap:
 
         return 1 + self.__nodes(node.left) + self.__nodes(node.right)
 
+    def __is_full(self, node: Union[Node, None]):
+        """
+        naam: __is_full
+        parameters: (node: Node)
+        beschrijving: geeft True terug als de (deel)boom vol is, anders False
+        output: (is_full: boolean)
+        preconditie: geen
+        postconditie: geen
+        """
+        if node is None or node.is_leaf():
+            return True
+
+        if self.__nodes(node.left) == 0:
+            return self.__nodes(node.right) == 0
+        if self.__nodes(node.right) == 0:
+            return self.__nodes(node.left) == 0
+
+        return self.__nodes(node.left) == self.__nodes(node.right)
+
     def last_node(self):
         """
         naam: last_node
@@ -83,7 +105,7 @@ class Heap:
         if self.root is None:
             return None
 
-        def last(node: Node | None):
+        def last(node: Union[Node, None]):
             if node is None or node.is_leaf():
                 return node
             if self.__height(node.left) > self.__height(node.right):
@@ -139,7 +161,7 @@ class Heap:
         self.rebuild(self.root)
         return key, True
 
-    def rebuild(self, node: Node | None):
+    def rebuild(self, node: Union[Node, None]):
         """
         naam: rebuild
         parameters: (node: Node)
@@ -152,19 +174,23 @@ class Heap:
             return None
 
         if self.maxHeap:
+            child = node
             if node.left.key > node.key:
-                self.swap(node, node.left)
-                self.rebuild(node.left)
-                if node.right is not None and node.right.key > node.key:
-                    self.swap(node, node.right)
-                    self.rebuild(node.right)
+                child = node.left
+            if node.right is not None and node.right.key > child.key:
+                child = node.right
+            if child is not node:
+                self.swap(node, child)
+                self.rebuild(child)
         else:
+            child = node
             if node.left.key < node.key:
-                self.swap(node, node.left)
-                self.rebuild(node.left)
-                if node.right is not None and node.right.key < node.key:
-                    self.swap(node, node.right)
-                    self.rebuild(node.right)
+                child = node.left
+            if node.right is not None and node.right.key < child.key:
+                child = node.right
+            if child is not node:
+                self.swap(node, child)
+                self.rebuild(child)
 
     def insert(self, node: Node, item: int):
         """
@@ -185,14 +211,19 @@ class Heap:
             node.right.parent = node
             node.right.is_left_child = False
             return node.right, True
-        elif self.__nodes(node.left) % 3 == 0 and self.__nodes(
-            node.left
-        ) != self.__nodes(node.right):
-            return self.insert(node.right, item)
         else:
+            if self.__is_full(node) or self.__nodes(node.left) == self.__nodes(
+                node.right
+            ):
+                return self.insert(node.left, item)
+            if self.__nodes(node.right) * 2 != self.__nodes(
+                node.left
+            ) and self.__is_full(node.left):
+                return self.insert(node.right, item)
+
             return self.insert(node.left, item)
 
-    def heapInsert(self, item):
+    def heapInsert(self, item: int):
         """
         naam: heapInsert
         parameters: (item: waarde)
@@ -252,7 +283,7 @@ class Heap:
         if self.heapIsEmpty():
             return None
 
-        def as_dict(node: Node | None):
+        def as_dict(node: Union[Node, None]):
             if node is None:
                 return None
             _dict = {
@@ -302,6 +333,74 @@ class Heap:
         """
         self.root = None
         self.__load(tree, True)
+
+    def print_tree(self):
+        """
+        naam: print_tree
+        parameters: geen
+        beschrijving: print de heap-boom op het scherm
+        output: geen
+        preconditie: geen
+        postconditie: geen
+        bron: https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python
+        """
+        if self.root is None:
+            print("Empty tree")
+            return
+
+        def height(root):
+            return 1 + max(height(root.left), height(root.right)) if root else -1
+
+        nlevels = height(self.root)
+        width = pow(2, nlevels + 1)
+
+        q: list[tuple] = [(self.root, 0, width, "c")]
+        levels = []
+
+        while q:
+            node, level, x, align = q.pop(0)
+            if node:
+                if len(levels) <= level:
+                    levels.append([])
+
+                levels[level].append([node, level, x, align])
+                seg = width // (pow(2, level + 1))
+                q.append((node.left, level + 1, x - seg, "l"))
+                q.append((node.right, level + 1, x + seg, "r"))
+
+        for i, l in enumerate(levels):
+            pre = 0
+            preline = 0
+            linestr = ""
+            pstr = ""
+            seg = width // (pow(2, i + 1))
+            for n in l:
+                valstr = str(n[0].key)
+                if n[3] == "r":
+                    linestr += (
+                        " " * (n[2] - preline - 1 - seg - seg // 2)
+                        + "¯" * (seg + seg // 2)
+                        + "\\"
+                    )
+                    preline = n[2]
+                if n[3] == "l":
+                    linestr += " " * (n[2] - preline - 1) + "/" + "¯" * (seg + seg // 2)
+                    preline = n[2] + seg + seg // 2
+                pstr += (
+                    " " * (n[2] - pre - len(valstr)) + valstr
+                )  # correct the potition acording to the number size
+                pre = n[2]
+            print(linestr)
+            print(pstr)
+
+
+# if __name__ == "__main__":
+#     t = Heap(False)
+#     for i in range(1, 16):
+#         t.heapInsert(i)
+#     for i in range(15, 0, -1):
+#         t.print_tree()
+#         t.heapDelete()
 
 
 if __name__ == "__main__":
